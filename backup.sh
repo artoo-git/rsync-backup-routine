@@ -53,6 +53,10 @@ log_spinup_count() {
 
 log "Starting backup process."
 
+# Disable spindown during backup
+log "Temporarily disabling hard drive spindown"
+hdparm -S 0 /dev/sda >> "${LOG_FILE}" 2>&1
+
 # Log the spin-up count before starting the backup
 log_spinup_count
 
@@ -106,6 +110,7 @@ for DIR in "${DIRECTORIES[@]}"; do
   if rsync -a --delete \
     ${LINK_DEST_OPTION} \
     --exclude=".cache" \
+    --exclude="thumbs/**" \
     "${SOURCE_PARENT_DIR}/${DIR}/" \
     "${BACKUP_PATH}" >> "${LOG_FILE}" 2>&1; then
     log "Backup for ${DIR} completed successfully."
@@ -124,5 +129,7 @@ done
 
 log "Backup process finished."
 
-# The lock file will be removed automatically by the trap
+log "Spinning down backup disk"
+hdparm -y /dev/sda 
 
+# The lock file will be removed automatically by the trap
